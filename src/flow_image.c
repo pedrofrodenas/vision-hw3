@@ -47,7 +47,49 @@ void draw_line(image im, float x, float y, float dx, float dy)
 image make_integral_image(image im)
 {
     image integ = make_image(im.w, im.h, im.c);
+    int i, j, k;
     // TODO: fill in the integral image
+
+    // Copy first pixel [0][0] on all channels
+    for (k = 0; k < im.c; ++k)
+    {
+        set_pixel(integ, 0, 0, k, get_pixel(im, 0, 0, k));
+    }
+
+    float pixel;
+    // Calculate over first row
+    for (k = 0; k < im.c; ++k)
+    {
+        for (i = 1; i < im.w; ++i)
+        {
+            pixel = get_pixel(integ, i-1, 0, k) + get_pixel(im, i, 0, k);
+            set_pixel(integ, i, 0, k, pixel);
+        }
+    }
+
+    // Calculate over first colum
+    for (k = 0; k < im.c; ++k)
+    {
+        for (j= 1; j < im.h; ++j)
+        {
+            pixel = get_pixel(integ, 0, j-1, k) + get_pixel(im, 0, j, k);
+            set_pixel(integ, 0, j, k, pixel);
+        }
+    }
+
+    // Now apply the algorithm to the rest of the image
+    for (k = 0; k < im.c; ++k)
+    {
+        for (j = 1; j < im.h; ++j)
+        {
+            for (i = 1; i < im.w; ++i)
+            {
+                pixel = get_pixel(im, i, j, k) + get_pixel(integ, i-1, j, k) + get_pixel(integ, i, j-1, k) - get_pixel(integ, i-1, j-1, k);
+                set_pixel(integ, i, j, k, pixel);
+            }
+        }
+    }
+
     return integ;
 }
 
@@ -74,6 +116,7 @@ image time_structure_matrix(image im, image prev, int s)
 {
     int i;
     int converted = 0;
+    image S = make_image(1,1,1);
     if(im.c == 3){
         converted = 1;
         im = rgb_to_grayscale(im);

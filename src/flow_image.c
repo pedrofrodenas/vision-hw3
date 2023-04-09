@@ -103,6 +103,30 @@ image box_filter_image(image im, int s)
     image integ = make_integral_image(im);
     image S = make_image(im.w, im.h, im.c);
     // TODO: fill in S using the integral image.
+
+    int outABC = ceil(s/2.0f);
+    int inD = floor(s/2.0f);
+
+    // TODO: fix border edge-case method
+    float A, B, C, D;
+    float cumsum;
+    for (k = 0; k < im.c; ++k)
+    {
+        for (j = 0; j < im.h; ++j)
+        {
+            for (i = 0; i < im.w; ++i)
+            {
+                D = get_pixel(integ, i+inD, j+inD, k);
+                B = get_pixel(integ, i+inD, j-outABC, k);
+                C = get_pixel(integ, i-outABC, j+inD, k);
+                A = get_pixel(integ, i-outABC, j-outABC, k);
+
+                cumsum = D-B-C+A;       
+                set_pixel(S, i, j, k, cumsum/pow(s,2));
+            }
+        }
+    }
+    free_image(integ);
     return S;
 }
 

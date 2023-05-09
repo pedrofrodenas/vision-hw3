@@ -182,6 +182,7 @@ image time_structure_matrix(image im, image prev, int s)
     }
 
     // Smoth Time-Structure Matrix
+    // TODO: Probar cambiar esto por suavizado gaussiano.
     image Ssmooth = box_filter_image(S, s);
 
 
@@ -198,6 +199,8 @@ image time_structure_matrix(image im, image prev, int s)
     return Ssmooth;
 }
 
+// En realidad habría que hacer el sumatorio de
+// los pixeles demtro de una región.
 // Calculate the velocity given a structure image
 // image S: time-structure image
 // int stride: only calculate subset of pixels for speed
@@ -206,6 +209,11 @@ image velocity_image(image S, int stride)
     image v = make_image(S.w/stride, S.h/stride, 3);
     int i, j;
     matrix M = make_matrix(2,2);
+    matrix b = make_matrix(2,1);
+
+    float vx;
+    float vy;
+
     for(j = (stride-1)/2; j < S.h; j += stride){
         for(i = (stride-1)/2; i < S.w; i += stride){
             float Ixx = S.data[i + S.w*j + 0*S.w*S.h];
@@ -215,14 +223,38 @@ image velocity_image(image S, int stride)
             float Iyt = S.data[i + S.w*j + 4*S.w*S.h];
 
             // TODO: calculate vx and vy using the flow equation
-            float vx = 0;
-            float vy = 0;
+            M.data[0][0] = Ixx;
+            M.data[0][1] = Ixy;
+            M.data[1][0] = Ixy;
+            M.data[1][1] = Iyy;
 
+            b.data[0][0] = -Ixt;
+            b.data[1][0] = -Iyt;
+
+            // TODO: Ver si esto es correcto hacerlo
+            matrix Minv = matrix_invert(M);
+
+            if ((Minv.rows == 0) && (Minv.cols == 0))
+            {
+                printmf("Cell x: %d, y: %d not invertible \n", i, j);
+                vx = 0;
+                vy = 0;
+            }
+            else
+            {
+                matrix d = matrix_mult_matrix(Minv, b);
+            
+                vx = d.data[0][0];
+                vy = d.data[1][0];
+                free_matrix(d);
+            }
+            free_matrix(Minv);
             set_pixel(v, i/stride, j/stride, 0, vx);
             set_pixel(v, i/stride, j/stride, 1, vy);
         }
     }
     free_matrix(M);
+    free_matrix(b);
     return v;
 }
 

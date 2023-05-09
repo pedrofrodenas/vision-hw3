@@ -201,6 +201,10 @@ integral_image = lib.make_integral_image
 integral_image.argtypes = [IMAGE]
 integral_image.restype = IMAGE
 
+time_structure_matrix = lib.time_structure_matrix
+time_structure_matrix.argtypes = [IMAGE, IMAGE, c_int]
+time_structure_matrix.restype = IMAGE
+
 def panorama_image(a, b, sigma=2, thresh=5, nms=3, inlier_thresh=2, iters=10000, cutoff=30):
     return panorama_image_lib(a, b, sigma, thresh, nms, inlier_thresh, iters, cutoff)
 

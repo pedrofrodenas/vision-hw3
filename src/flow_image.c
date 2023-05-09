@@ -138,9 +138,11 @@ image box_filter_image(image im, int s)
 //          3rd channel is IxIy, 4th channel is IxIt, 5th channel is IyIt.
 image time_structure_matrix(image im, image prev, int s)
 {
-    int i;
+    int i,j;
     int converted = 0;
-    image S = make_image(1,1,1);
+
+    // Time-Structure Matrix with 5 channels
+    image S = make_image(im.w, im.h, 5);
     if(im.c == 3){
         converted = 1;
         im = rgb_to_grayscale(im);
@@ -148,14 +150,52 @@ image time_structure_matrix(image im, image prev, int s)
     }
 
     // TODO: calculate gradients, structure components, and smooth them
+    image gx = make_gx_filter();
+    image gy = make_gy_filter();
+
+    // TODO: Check if preserve must be set to 0
+    image Ix = convolve_image(im, gx, 0);
+    image Iy = convolve_image(im, gy, 0);
+
+    image It = sub_image(prev, im);
+
+    float pixelIx, pixelIy, pixelIt;
+    for (i=0; i<im.h; ++i)
+    {
+        for (j=0; j<im.w; ++j)
+        {
+            pixelIx = get_pixel(Ix, j, i, 0);
+            pixelIy = get_pixel(Iy, j, i, 0);
+            pixelIt = get_pixel(It, j, i, 0);
+
+            // Ix^2
+            set_pixel(S, j, i, 0, powf(pixelIx, 2));
+            // Iy^2
+            set_pixel(S, j, i, 1, powf(pixelIy, 2));
+            // IxIy
+            set_pixel(S, j, i, 2, pixelIx*pixelIy);
+            // IxIt
+            set_pixel(S, j, i, 3, pixelIx*pixelIt);
+            // IyIt
+            set_pixel(S, j, i, 4, pixelIy*pixelIt);
+        }
+    }
+
+    // Smoth Time-Structure Matrix
+    image Ssmooth = box_filter_image(S, s);
 
 
-
+    free_image(gx);
+    free_image(gy);
+    free_image(Ix);
+    free_image(Iy);
+    free_image(It);
+    free_image(S);
 
     if(converted){
         free_image(im); free_image(prev);
     }
-    return S;
+    return Ssmooth;
 }
 
 // Calculate the velocity given a structure image

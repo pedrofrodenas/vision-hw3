@@ -57,6 +57,7 @@ image rgb_to_grayscale(image im)
     {
         gray.data[i] = 0.299 * im.data[i] + 0.587 * im.data[i + pixel_per_channel] + 0.114 * im.data[i + pixel_per_channel * 2];
     }
+    free_image(im);
     return gray;
 }
 
